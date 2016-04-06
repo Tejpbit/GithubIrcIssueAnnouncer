@@ -12,12 +12,12 @@ const client = new irc.Client(config.irc.server, config.irc.nick, {
     secure: config.irc.secure,
 });
 
-config.irc.channels.map(c => {
-  client.join(`${c}`, () => {
-    client.say(`${c}`, "Heya Peeeps!! GHIA is in Da HOUSE!!")
+config.irc.channels.map(channel => {
+  client.join(`${channel}`, () => {
+    client.say(`${channel}`, "Heya Peeeps!! GHIA is in Da HOUSE!!")
   })
 
-  client.addListener(`message${c}`, (from, message) => {
+  client.addListener(`message${channel}`, (from, message) => {
     const issue = /\#(\d+)/g;
     const matches = message.match(issue)
     if (matches) {
@@ -27,10 +27,10 @@ config.irc.channels.map(c => {
         const number = parseInt(issueNumber,10)
         github.Issues.getIssue(config.github.user, config.github.repo, number)
         .then(issue => {
-          client.say(`${c}`,
-            `#${number}: ${irc.colors.wrap("orange", irc.colors.wrap("white", issue.title))} ${issue.html_url}`)
-          console.log(issue.title);
-
+          const state = irc.colors.wrap(issue.state === 'open' ? "dark_green" : "dark_red", issue.state)
+          const title = irc.colors.wrap("orange", issue.title)
+          const url = irc.colors.wrap("dark_blue", issue.html_url)
+          client.say(`${channel}`, `#${number}: [${state}] ${title} ${url}`)
         });
       })
 
