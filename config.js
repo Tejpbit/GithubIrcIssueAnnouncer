@@ -11,5 +11,8 @@ module.exports = {
     github: {
       user: "",
       repo: ""
-    }
+    },
+    whitelist: [],
+    //Blacklist is only used if the whitelist is empty
+    blacklist: []
 }
