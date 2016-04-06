@@ -7,9 +7,9 @@ module.exports = {
         userName: 'banned',
         secure: true,
         debug: false
-    }
+    },
     github: {
-      user: ""
+      user: "",
       repo: ""
     }
 }
