@@ -39,8 +39,8 @@ function isAllowedToAskForIssue(sender) {
 }
 
 config.irc.channels.map(channel => {
-  client.join(`${channel}`, () => {
-    client.say(`${channel}`, "Heya Peeeps!! GHIA is in Da HOUSE!!")
+  client.join(channel, () => {
+    client.say(channel, "Heya Peeeps!! GHIA is in Da HOUSE!!")
   })
 
   client.addListener(`message${channel}`, (from, message) => {
@@ -113,7 +113,7 @@ const printIssue = (channel, issueNumber) => {
     const state = irc.colors.wrap(issue.state === 'open' ? "dark_green" : "dark_red", issue.state)
     const title = irc.colors.wrap("orange", issue.title)
     const url = irc.colors.wrap("dark_blue", issue.html_url)
-    client.say(`${channel}`, `#${number}: [${state}] ${title} ${url}`)
+    client.say(channel, `#${number}: [${state}] ${title} ${url}`)
   });
 }
 
