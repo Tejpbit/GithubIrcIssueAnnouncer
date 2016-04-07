@@ -44,31 +44,66 @@ config.irc.channels.map(channel => {
   })
 
   client.addListener(`message${channel}`, (from, message) => {
+    if (config.admins.indexOf(from) >= 0 && message.startsWith(config.irc.nick)) {
+      handleAdminCommand(message)
+    }
+
     if (!isAllowedToAskForIssue(from)) {
       return
     }
+
     const issue = /\#(\d+)/g;
     const matches = message.match(issue)
     if (matches) {
       matches.map(s => s.substring(1))
-      .forEach(issueNumber => {
-
-        const number = parseInt(issueNumber,10)
-        github.Issues.getIssue(config.github.user, config.github.repo, number)
-        .then(issue => {
-          const state = irc.colors.wrap(issue.state === 'open' ? "dark_green" : "dark_red", issue.state)
-          const title = irc.colors.wrap("orange", issue.title)
-          const url = irc.colors.wrap("dark_blue", issue.html_url)
-          client.say(`${channel}`, `#${number}: [${state}] ${title} ${url}`)
-        });
-      })
-
-
+      .forEach((i) => printIssue(channel, i))
     }
   })
-
 })
 
+const handleAdminCommand = (command) => {
+  args = command.toLowerCase().split(' ').slice(1)
+  switch (args[0].toLowerCase()) {
+    case 'whitelist':
+      doActionOnList(whitelist, args[1], args[2])
+      break;
+    case 'blacklist':
+      doActionOnList(blacklist, args[1], args[2])
+      break;
+    default:
+      console.log("unknown command");
+  }
+}
+
+const doActionOnList = (array, action, obj) => {
+  console.log(`${array}, ${action}, ${obj}`);
+  if (action === 'add') {
+    console.log("is add");
+    if (array.indexOf(obj) === -1) {
+      array.push(obj)
+      console.log("wat");
+    }
+  } else if (action === 'remove') {
+      console.log("is remove");
+      const index = array.indexOf(obj)
+      if (index !== -1) {
+        array.splice(index, 1)
+        console.log("wat2");
+      }
+    }
+}
+
+const printIssue = (channel, issueNumber) => {
+  const number = parseInt(issueNumber,10)
+  github.Issues.getIssue(config.github.user, config.github.repo, number)
+  .then(issue => {
+    const state = irc.colors.wrap(issue.state === 'open' ? "dark_green" : "dark_red", issue.state)
+    const title = irc.colors.wrap("orange", issue.title)
+    const url = irc.colors.wrap("dark_blue", issue.html_url)
+    console.log(channel);
+    client.say(`${channel}`, `#${number}: [${state}] ${title} ${url}`)
+  });
+}
 
 client.addListener('error', (error) => {
     console.log(error);
