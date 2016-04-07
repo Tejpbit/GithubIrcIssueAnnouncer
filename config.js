@@ -14,5 +14,7 @@ module.exports = {
     },
     whitelist: [],
     //Blacklist is only used if the whitelist is empty
-    blacklist: []
+    blacklist: [],
+    //Is allowed to edit black/whitelist on the fly
+    admins: []
 }
