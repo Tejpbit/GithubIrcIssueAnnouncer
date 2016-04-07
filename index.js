@@ -45,7 +45,7 @@ config.irc.channels.map(channel => {
 
   client.addListener(`message${channel}`, (from, message) => {
     if (config.admins.indexOf(from) >= 0 && message.startsWith(config.irc.nick)) {
-      handleAdminCommand(message)
+      handleAdminCommand(message, channel)
     }
 
     if (!isAllowedToAskForIssue(from)) {
@@ -61,34 +61,47 @@ config.irc.channels.map(channel => {
   })
 })
 
-const handleAdminCommand = (command) => {
-  args = command.toLowerCase().split(' ').slice(1)
-  switch (args[0].toLowerCase()) {
+responses = {
+  whitelist: {
+    add: (nick) => `${nick}: Mah man! I now respect your authoritah`,
+    remove: (nick) => `${nick}: No more am I a slave to your command!`
+  },
+  blacklist: {
+    add: (nick) => `${nick}: Ohh noes! You're on the naughty list!`,
+    remove: (nick) => `${nick}: Looks like santa is coming to your town after all.`
+  }
+}
+
+const handleAdminCommand = (command, channel) => {
+  const args1 = command.split(' ').slice(1)
+  const nick = args1[2]
+  const args = command.toLowerCase().split(' ').slice(1)
+  const list = args[0]
+  const action = args[1]
+  switch (list) {
     case 'whitelist':
-      doActionOnList(whitelist, args[1], args[2])
+      doActionOnList(whitelist, action, nick)
+      client.say(channel, responses[list][action](nick))
       break;
     case 'blacklist':
-      doActionOnList(blacklist, args[1], args[2])
+      doActionOnList(blacklist, action, nick)
+      client.say(channel, responses[list][action](nick))
       break;
     default:
-      console.log("unknown command");
+      const github_url = irc.colors.wrap("dark_blue", "https://git.io/vVXYn")
+      client.say(channel, `No such command. See my github page for info: ${github_url}`)
   }
 }
 
 const doActionOnList = (array, action, obj) => {
-  console.log(`${array}, ${action}, ${obj}`);
   if (action === 'add') {
-    console.log("is add");
     if (array.indexOf(obj) === -1) {
       array.push(obj)
-      console.log("wat");
     }
   } else if (action === 'remove') {
-      console.log("is remove");
       const index = array.indexOf(obj)
       if (index !== -1) {
         array.splice(index, 1)
-        console.log("wat2");
       }
     }
 }
@@ -100,7 +113,6 @@ const printIssue = (channel, issueNumber) => {
     const state = irc.colors.wrap(issue.state === 'open' ? "dark_green" : "dark_red", issue.state)
     const title = irc.colors.wrap("orange", issue.title)
     const url = irc.colors.wrap("dark_blue", issue.html_url)
-    console.log(channel);
     client.say(`${channel}`, `#${number}: [${state}] ${title} ${url}`)
   });
 }
