@@ -1,6 +1,7 @@
 const SimpleApi = require('github-api-simple');
 const github = new SimpleApi();
 const argv = require('yargs').argv;
+const _ = require('lodash');
 
 const irc = require('irc');
 const config = require('./config.js');
@@ -23,19 +24,6 @@ if (argv["whitelist"] && typeof argv["whitelist"] === 'string') {
 if (argv["blacklist"] && typeof argv["blacklist"] === 'string') {
   argsBlacklist = argv["blacklist"].split(',')
   blacklist = Array.prototype.concat(blacklist, argsBlacklist)
-}
-
-function isAllowedToAskForIssue(sender) {
-  if (whitelist.length === 0) {
-    if (blacklist.length > 0 && blacklist.indexOf(sender) >= 0) {
-      return false;
-    }
-  } else {
-    if (whitelist.indexOf(sender) === -1) {
-      return false
-    }
-  }
-  return true
 }
 
 config.irc.channels.map(channel => {
@@ -120,3 +108,12 @@ const printIssue = (channel, issueNumber) => {
 client.addListener('error', (error) => {
     console.log(error);
 });
+
+function isAllowedToAskForIssue(sender, whitelist, blacklist) {
+  const whitelistExists = !_.isEmpty(whitelist)
+  const blacklistExists = !_.isEmpty(blacklist)
+  return (!whitelistExists && !blacklistExists)
+      || (whitelistExists && _.includes(whitelist, sender))
+      || (blacklistExists && !_.includes(blacklist, sender))
+}
+exports.isAllowedToAskForIssue = isAllowedToAskForIssue
