@@ -36,7 +36,7 @@ config.irc.channels.map(channel => {
       handleAdminCommand(message, channel)
     }
 
-    if (!isAllowedToAskForIssue(from)) {
+    if (!isAllowedToAskForIssue(from, whitelist, blacklist)) {
       return
     }
 
