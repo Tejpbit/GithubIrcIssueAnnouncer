@@ -1,7 +1,7 @@
 # GithubIrcIssueAnnouncer
 Prints information about an issue when it's referded to in an irc-channel 
 
-##Setup
+## Setup
 
 Do configuration in config.js
 For example a freenode setup would look like:
