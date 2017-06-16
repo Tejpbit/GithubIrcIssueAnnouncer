@@ -6,6 +6,8 @@ const _ = require('lodash');
 const irc = require('irc');
 const config = require('./config.js');
 
+const github_url = irc.colors.wrap("dark_blue", "https://git.io/vVXYn");
+
 const client = new irc.Client(config.irc.server, config.irc.nick, {
     userName: config.irc.userName,
     channels: config.irc.channels,
@@ -33,7 +35,7 @@ config.irc.channels.map(channel => {
 
   client.addListener(`message${channel}`, (from, message) => {
     if (config.admins.indexOf(from) >= 0 && message.startsWith(config.irc.nick)) {
-      handleAdminCommand(message, channel)
+      handleAdminCommand(from, message, channel)
     }
 
     if (!isAllowedToAskForIssue(from, whitelist, blacklist)) {
@@ -49,36 +51,58 @@ config.irc.channels.map(channel => {
   })
 })
 
-responses = {
+commands = {
   whitelist: {
-    add: (nick) => `${nick}: Mah man! I now respect your authoritah`,
-    remove: (nick) => `${nick}: No more am I a slave to your command!`
+    error: (nick) => `${nick}: bad command. Try "whitelist (add|remove) NICK"`,
+    add: {
+      response: (nick) => `${nick}: Mah man! I now respect your authoritah`,
+      execute: (nick) => doActionOnList(whitelist, 'add', nick)
+    },
+    remove: {
+      response: (nick) => `${nick}: No more am I a slave to your command!`,
+      execute: (nick) => doActionOnList(whitelist, 'remove', nick)
+    }
   },
   blacklist: {
-    add: (nick) => `${nick}: Ohh noes! You're on the naughty list!`,
-    remove: (nick) => `${nick}: Looks like santa is coming to your town after all.`
+    error: (nick) => `${nick}: bad command. Try "blacklist (add|remove) NICK"`,
+    add: {
+      response: (nick) => `${nick}: Ohh noes! You're on the naughty list!`,
+      execute: (nick) => doActionOnList(blacklist, 'add', nick)
+    },
+    remove: {
+      response: (nick) => `${nick}: Looks like santa is coming to your town after all.`,
+      execute: (nick) => doActionOnList(blacklist, 'remove', nick)
+    }
   }
 }
 
-const handleAdminCommand = (command, channel) => {
-  const args1 = command.split(' ').slice(1)
-  const nick = args1[2]
-  const args = command.toLowerCase().split(' ').slice(1)
-  const list = args[0]
-  const action = args[1]
-  switch (list) {
-    case 'whitelist':
-      doActionOnList(whitelist, action, nick)
-      client.say(channel, responses[list][action](nick))
-      break;
-    case 'blacklist':
-      doActionOnList(blacklist, action, nick)
-      client.say(channel, responses[list][action](nick))
-      break;
-    default:
-      const github_url = irc.colors.wrap("dark_blue", "https://git.io/vVXYn")
-      client.say(channel, `No such command. See my github page for info: ${github_url}`)
+
+
+const handleAdminCommand = (from, command, channel) => {
+  const args = command.split(' ').slice(1);
+
+  const list = args[0].toLowerCase();
+  console.log(list);
+  if (list !== 'whitelist' && list !== 'blacklist') {
+    client.say(channel, commands[list]["error"](from));
+    return;
   }
+
+  if (args.length !== 3) {
+    client.say(channel, `${from}: No such command. See my github page for info: ${github_url}`)
+    return;
+  }
+
+  const action = args[1].toLowerCase();
+  if (!action in commands) {
+    client.say(channel, `${from}: No such command. See my github page for info: ${github_url}`)
+    return;
+  }
+  const nick = args[2];
+
+
+  client.say(channel, commands[list][action].response(nick))
+  commands[list][action].execute()
 }
 
 const doActionOnList = (array, action, obj) => {
